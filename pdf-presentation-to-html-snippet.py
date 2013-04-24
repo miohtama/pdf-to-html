@@ -10,7 +10,7 @@
 
     - With alt tags
 
-    Dependencies::
+    Dependencies (OSX)::
 
         sudo port install ghostscript
 
@@ -18,6 +18,10 @@
 
         git clone xxx
         cd pdf-presentation-to-html
+        curl -L -o virtualenv.py https://raw.github.com/pypa/virtualenv/master/virtualenv.py
+        python virtualenv.py venv
+        . venv/bin/activate
+        pip install pyPdf
 
 
 
@@ -29,26 +33,74 @@ import shutil
 from StringIO import StringIO
 from collections import defaultdict
 
-from pdfminer.converter import LTTextItem, TextConverter
-from pdfminer.pdfparser import PDFDocument, PDFParser
-from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
+import pyPdf
 
-SLIDE_TEMPLATE = '<img src="{prefix}{src}" alt="{alt}" />'
+from pyPdf.pdf import ContentStream
+from pyPdf.pdf import TextStringObject
+
+
+SLIDE_TEMPLATE = u'<div class="slide"><img src="{prefix}{src}" alt="{alt}" /></div>'
 
 
 def create_images(src, target, width=620, height=480):
     """ Create series of images from slides.
+
+    http://right-sock.net/linux/better-convert-pdf-to-jpg-using-ghost-script/
 
     :param src: Source PDF file
 
     :param target: Target folder
     """
 
-    cmd = "gs -dNOPAUSE -sDEVICE=jpeg -sOutputFile=slide%%d.jpg" + \
-          " -dJPEGQ=70 -r{width}x{height} -q {src} -c quit".format(locals())
+    if target.endswith("/"):
+        target = target[0:-1]
 
+    ftemplate = "%(target)s/slide%%d.jpg" % locals()
+
+    cmd = "gs -dNOPAUSE -dPDFFitPage -sDEVICE=jpeg -sOutputFile=" + ftemplate + \
+          " -dJPEGQ=70 -dDEVICEWIDTH=800 -dDEVICEHEIGHT=600  %(src)s -c quit" % locals()
+
+    print "Executing: %s" % cmd
     if os.system(cmd):
         raise RuntimeError("Command failed: %s" % cmd)
+
+
+def extract_text(self):
+    """ Patched extractText() from pyPdf to put spaces between different text snippets.
+    """
+    text = u""
+    content = self["/Contents"].getObject()
+    if not isinstance(content, ContentStream):
+        content = ContentStream(content, self.pdf)
+    # Note: we check all strings are TextStringObjects.  ByteStringObjects
+    # are strings where the byte->string encoding was unknown, so adding
+    # them to the text here would be gibberish.
+    for operands, operator in content.operations:
+        if operator == "Tj":
+            _text = operands[0]
+            if isinstance(_text, TextStringObject):
+                text += _text
+        elif operator == "T*":
+            text += "\n"
+        elif operator == "'":
+            text += "\n"
+            _text = operands[0]
+            if isinstance(_text, TextStringObject):
+                text += operands[0]
+        elif operator == '"':
+            _text = operands[2]
+            if isinstance(_text, TextStringObject):
+                text += "\n"
+                text += _text
+        elif operator == "TJ":
+            for i in operands[0]:
+                if isinstance(i, TextStringObject):
+                    text += i
+
+        if text and not text.endswith(" "):
+            text += " "  # Don't let words concatenate
+
+    return text
 
 
 def scrape_text(src):
@@ -61,56 +113,28 @@ def scrape_text(src):
 
     pages = []
 
-    class Scraper(TextConverter):
+    pdf = pyPdf.PdfFileReader(open(src, "rb"))
+    for page in pdf.pages:
+        text = extract_text(page)
+        pages.append(text)
 
-        def end_page(self, i):
-
-            lines = defaultdict(lambda: {})
-            for child in self.cur_item.objs:
-                if isinstance(child, LTTextItem):
-                    (_, _, x, y) = child.bbox
-                    line = lines[int(-y)]
-                    line[x] = child.text.encode(self.codec)
-
-            for y in sorted(lines.keys()):
-                line = lines[y]
-                text = ("".join(line[x] for x in sorted(line.keys())))
-                pages[i] = text
-
-    rsrc = PDFResourceManager()
-    outfp = StringIO()
-
-    device = Scraper(rsrc, outfp, codec="utf-8")
-
-    doc = PDFDocument()
-
-    fp = open(src, 'rb')
-    parser = PDFParser(fp)
-    parser.set_document(doc)
-    doc.set_parser(parser)
-    doc.initialize('')
-
-    interpreter = PDFPageInterpreter(rsrc, device)
-
-    for i, page in enumerate(doc.get_pages()):
-        outfp.write("START PAGE %d\n" % i)
-        interpreter.process_page(page)
-        outfp.write("END PAGE %d\n" % i)
-
-    device.close()
-    fp.close()
+    return pages
 
 
 def create_index_html(target, slides, prefix):
     """
     """
+
     out = open(target, "wt")
 
     print >> out, "<!doctype html>"
     for i in xrange(0, len(slides)):
         alt = slides[i]  # ALT text for this slide
-        params = dict(src="slide%d.jpg" % i, prefix=prefix, alt=alt)
-        print >> out, SLIDE_TEMPLATE.format(params)
+        params = dict(src=u"slide%d.jpg" % i, prefix=prefix, alt=alt)
+        line = SLIDE_TEMPLATE.format(**params)
+        print >> out, line.encode("utf-8")
+
+    out.close()
 
 
 def main():
@@ -134,6 +158,7 @@ def main():
 
     target_html = os.path.join(folder, "index.html")
 
+    print "Creating: " + target_html
     create_index_html(target_html, alt_texts, prefix)
 
     create_images(src, folder)

@@ -34,5 +34,7 @@ __minitage__*
 .settings
 .project
 .pydevproject
+virtualenv.py
 venv/
 images/
+output/
