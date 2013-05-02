@@ -34,6 +34,7 @@ __minitage__*
 .settings
 .project
 .pydevproject
+.DS_Store
 virtualenv.py
 venv/
 images/
