@@ -29,7 +29,7 @@ Dependencies (OSX)::
 
 Please note that Ghostscript 9.06 crashed for me during the export. Please upgrade to 9.07.
 
-Setting up virtualenv and insllating the code:
+`Setting up virtualenv <http://opensourcehacker.com/2012/09/16/recommended-way-for-sudo-free-installation-of-python-software-with-virtualenv/>´_ and insllating the code:
 
     git clone xxx
     cd pdf-presentation-to-html
