@@ -3,22 +3,22 @@
 Introduction
 ----------------
 
-This is a Python script to convert a PDF to series of images with alt texts.
+This is a Python script to convert a PDF to series of HTML `<img>` tags with alt texts.
 It makes the presentation suitable embedded for a blog post and reading on a mobile device and such.
 
-My workflow:
+Example Workflow:
 
-* Export presentation from Keynote to PDF. On Export dialog untick *include date* and *add borders around slides*.
+* Export presentation from Apple Keynote to PDF file. On Export dialog untick *include date* and *add borders around slides*.
 
-* Convert PDFs to JPEGs using Ghostscript
+* Run the script against generated PDF file to convert it to a series of JPEG files and a HTML snippet with `<img>` tags
 
-* Scrape `<img>` alt texts using
-
-* Insert optional image full URL prefix, so you don't need to manually link images to the hosting service
+* Optionally, the scripts adds a full URL prefix to `<img src>`, so you don't need to manually link images to your hosting service absolute URL
 
 * Copy-paste generated HTML to your blog post
 
 Tested with Apple Keynote exported PDFs, but the approach should work for any PDF content.
+
+See `example blog post and presentation <http://opensourcehacker.com/2013/04/24/meet-plone-the-most-awesome-open-source-community-in-the-world/>`_.
 
 Installation
 --------------
