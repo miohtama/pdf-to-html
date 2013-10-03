@@ -29,7 +29,7 @@ Dependencies (OSX)::
 
 Please note that Ghostscript 9.06 crashed for me during the export. Please upgrade to 9.07.
 
-`Setting up virtualenv <http://opensourcehacker.com/2012/09/16/recommended-way-for-sudo-free-installation-of-python-software-with-virtualenv/>´_ and insllating the code:
+`Setting up virtualenv <http://opensourcehacker.com/2012/09/16/recommended-way-for-sudo-free-installation-of-python-software-with-virtualenv/>`_ and insllating the code:
 
     git clone xxx
     cd pdf-presentation-to-html
@@ -50,6 +50,10 @@ Advanced example::
 
     . venv/bin/activate
     python pdf2html.py test.pdf output
+
+Even more advanced example with hardcoded URL::
+
+    GHOSTSCRIPT=/usr/local/bin/gs python pdf2html.py test.pdf output http://opensourcehacker.com/wp-content/uploads/wpd2013/
 
 
 Author
