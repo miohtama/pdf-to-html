@@ -55,6 +55,9 @@ Even more advanced example with hardcoded URL::
 
     GHOSTSCRIPT=/usr/local/bin/gs python pdf2html.py test.pdf output http://opensourcehacker.com/wp-content/uploads/wpd2013/
 
+Then upload to the server for Wordpress to access::
+
+    rsync -av pycon2014 yourserver.example.com:/srv/yoursite/wordpress/wp-content/uploads
 
 Author
 --------------
